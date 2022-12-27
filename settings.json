@@ -1,0 +1,9 @@
+{
+    "networking": {
+        "main_cu": "192.168.122.1",
+        "raspi": "192.168.122.206"
+    },
+    "system": {
+        "ROS_enable": false
+    }
+}
