@@ -6,11 +6,13 @@ import lib.log as log_util
 import lib.settings as settings_util
 
 import ros.sensors_subscriber as sensors_subscriber
+import ros.cameras_subscriber as cameras_subscriber
 
 _MODULE_ID = 'ros.ros_service'
 _NODE_NAME = 'system_interface_ros_service_node'
 _ROS_SUBSCRIBERS = {
     'sensors': sensors_subscriber,
+    'cameras': cameras_subscriber,
 }
 
 service_active = True

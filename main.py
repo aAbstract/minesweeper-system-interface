@@ -7,6 +7,7 @@ import lib.http_response as http_resp_man
 import ros.ros_service as ros_service
 
 from routes import sensors_api
+from routes import cameras_api
 
 server = FastAPI()
 
@@ -20,6 +21,7 @@ server.add_middleware(
 
 # register routes
 server.include_router(sensors_api.router)
+server.include_router(cameras_api.router)
 
 
 @server.get('/')

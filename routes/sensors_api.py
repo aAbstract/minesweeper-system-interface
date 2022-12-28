@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 
 import lib.log as log_man
-from models.internal.services import service_response
 import routes.route_config as route_config
 import lib.http_response as http_resp_man
 import database.sensors_database_service as sensors_database_service
@@ -14,9 +13,9 @@ _ROOT_ROUTE = f"{route_config.API_ROOT}/sensors"
 router = APIRouter()
 
 
-@router.post(f"{_ROOT_ROUTE}/get-reading")
+@router.post(f"{_ROOT_ROUTE}/get-readings")
 async def get_reading():
-    func_id = f"{_MODULE_ID}.get_reading"
+    func_id = f"{_MODULE_ID}.get_readings"
 
     log_man.print_log(func_id, 'DEBUG',
                       'received get sensors readings request')

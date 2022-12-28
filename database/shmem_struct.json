@@ -1,3 +1,6 @@
 {
-    "sensors_cluster_readings": {}
+    "sensors_cluster_readings": {},
+    "cameras_cluster_feed": {
+        "CAM_1": "none"
+    }
 }

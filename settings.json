@@ -4,6 +4,6 @@
         "raspi": "192.168.122.206"
     },
     "system": {
-        "ROS_enable": false
+        "ROS_enable": true
     }
 }
