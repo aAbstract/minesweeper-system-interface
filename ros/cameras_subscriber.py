@@ -24,7 +24,7 @@ def _cameras_ros_reader(msg: ros_std_msgs.String):
 
 def subscriber_setup():
     func_id = f"{_MODULE_ID}.subscriber_setup"
-    topic_id = '/example_camera_adapter_node/camera_feed'
+    topic_id = '/camera_adapter_node/camera_feed'
 
     try:
         rospy.Subscriber(topic_id, ros_std_msgs.String, _cameras_ros_reader)
