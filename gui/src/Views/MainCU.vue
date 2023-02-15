@@ -1,7 +1,10 @@
 <script setup lang="ts">
 
+// framework
+import { ref, onMounted } from 'vue';
+
 // lib
-import { robot_readings, rpi_state, cu_state, net_state, ros_nodes_states, ros_logs } from '../Lib/temp_objs';
+import { rpi_state, cu_state, net_state, ros_nodes_states } from '../Lib/temp_objs';
 import { server_url } from '../Lib/networking';
 
 // UI components
@@ -9,11 +12,138 @@ import SensorsGroup from '../Components/SensorsGroup.vue';
 import ConfigSection from '../Components/ConfigSection.vue'
 import StateDisplay from '../Components/StateDisplay.vue';
 
+// API
+import { get_sensors_readings } from '../API/sensors';
+import { get_controls_readings } from '../API/joystick_controls';
+
+// models
+import { sensor_reading_group, ros_log } from '../Models/ui';
+
 // global vars
 const ros_log_tag_map = {
     'INFO': 'green_ros_log_tag',
     'ERROR': 'red_ros_log_tag',
 } as any;
+
+// refs
+const acc_readings_group = ref({
+    group_name: 'Accelerometer',
+    readings: [
+        {
+            reading_key: 'X',
+            reading_value: '0',
+        },
+        {
+            reading_key: 'Y',
+            reading_value: '0',
+        },
+        {
+            reading_key: 'Z',
+            reading_value: '0',
+        },
+    ],
+} as sensor_reading_group);
+
+const coil_readings_group = ref({
+    group_name: 'Coil',
+    readings: [{
+        reading_key: 'Trigger',
+        reading_value: '0',
+    }],
+} as sensor_reading_group);
+
+const ros_logs = ref([
+    {
+        ros_log_level: 'INFO',
+        ros_log_text: 'ZRI Online',
+    },
+] as ros_log[]);
+
+const right_analog = ref('0,0')
+const left_analog = ref('0,0')
+const cmd = ref('X')
+
+// utils
+function add_log(_log: ros_log) {
+    ros_logs.value.push(_log);
+}
+
+function update_sensors() {
+    get_sensors_readings().then((resp) => {
+        if (!resp.success) {
+            add_log({
+                ros_log_level: 'ERROR',
+                ros_log_text: resp.msg,
+            });
+            return;
+        }
+
+        // set acc reaings
+        const acc_readings = {
+            group_name: 'Accelerometer',
+            readings: [
+                {
+                    reading_key: 'X',
+                    reading_value: resp.data.sensors_readings.acc_x,
+                },
+                {
+                    reading_key: 'Y',
+                    reading_value: resp.data.sensors_readings.acc_y,
+                },
+                {
+                    reading_key: 'Z',
+                    reading_value: resp.data.sensors_readings.acc_z,
+                },
+            ],
+        } as sensor_reading_group;
+        acc_readings_group.value = acc_readings;
+
+        // set coil trigger
+        const coil_readings = {
+            group_name: 'Coil',
+            readings: [{
+                reading_key: 'Trigger',
+                reading_value: String(resp.data.sensors_readings.coil * 100),
+            }],
+        };
+        coil_readings_group.value = coil_readings;
+
+    });
+}
+
+function update_controls_feedback() {
+    get_controls_readings().then((resp) => {
+        if (!resp.success) {
+            add_log({
+                ros_log_level: 'ERROR',
+                ros_log_text: resp.msg,
+            });
+            return;
+        }
+
+        cmd.value = resp.data.joystick_controls.cmd;
+
+        let lax = Number(resp.data.joystick_controls.left_analog.split(',')[0]);
+        let lay = Number(resp.data.joystick_controls.left_analog.split(',')[1]);
+        let rax = Number(resp.data.joystick_controls.right_analog.split(',')[0]);
+        let ray = Number(resp.data.joystick_controls.right_analog.split(',')[1]);
+
+        left_analog.value = `${lax.toFixed(2)},${lay.toFixed(2)}`;
+        right_analog.value = `${rax.toFixed(2)},${ray.toFixed(2)}`;
+    });
+}
+
+onMounted(() => {
+    // slow update loop
+    setInterval(() => {
+        update_sensors();
+    }, 1000);
+
+    // quick update loop
+    setInterval(() => {
+        update_controls_feedback();
+    }, 500);
+});
 
 </script>
 
@@ -22,8 +152,8 @@ const ros_log_tag_map = {
         <div id="control_cont">
             <div id="readings_cont">
                 <h3 class="box_style sec_header">Readings</h3>
-                <SensorsGroup v-for="reading_group in robot_readings" :sensors_group="reading_group"
-                    :apply_colors="false" />
+                <SensorsGroup :sensors_group="acc_readings_group" :apply_colors="false" />
+                <SensorsGroup :sensors_group="coil_readings_group" :apply_colors="true" />
                 <SensorsGroup :sensors_group="rpi_state" :apply_colors="true" />
             </div>
             <div id="config_cont">
@@ -50,14 +180,14 @@ const ros_log_tag_map = {
             <div id="control_feed_cont">
                 <h3 class="small_sec_header">Feed Back</h3>
                 <div class="control_feed_body_line">
-                    <span>LAX</span>
-                    <span>CMD</span>
-                    <span>RAX</span>
+                    <span>Left Analog</span>
+                    <span>Button</span>
+                    <span>Right Analog</span>
                 </div>
                 <div class="control_feed_body_line">
-                    <span>10</span>
-                    <span>F</span>
-                    <span>0</span>
+                    <span>{{ left_analog }}</span>
+                    <span>{{ cmd }}</span>
+                    <span>{{ right_analog }}</span>
                 </div>
                 <div id="tags_cont">
                     <div id="ros_conn_tag" class="mode_tag">ROS ONLINE</div>
@@ -79,11 +209,11 @@ const ros_log_tag_map = {
             </div>
             <div id="logs_cont" class="tech_window">
                 <h3 class="tech_sec_header">Logs</h3>
-                <div v-for="ros_log in ros_logs" class="ros_log_item">
-                    <span :class="`ros_log_tag ${ros_log_tag_map[ros_log.ros_log_level]}`">{{
-                        ros_log.ros_log_level
+                <div v-for="ros_log_obj in ros_logs" class="ros_log_item">
+                    <span :class="`ros_log_tag ${ros_log_tag_map[ros_log_obj.ros_log_level]}`">{{
+                        ros_log_obj.ros_log_level
                     }}</span>
-                    <div class="ros_log_text">{{ ros_log.ros_log_text }}</div>
+                    <div class="ros_log_text">{{ ros_log_obj.ros_log_text }}</div>
                 </div>
             </div>
         </div>
@@ -133,7 +263,7 @@ const ros_log_tag_map = {
 }
 
 .control_feed_body_line span {
-    width: 100px;
+    width: 200px;
     font-weight: bold;
 }
 

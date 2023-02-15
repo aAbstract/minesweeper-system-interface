@@ -8,6 +8,7 @@ import ros.ros_service as ros_service
 
 from routes import sensors_api
 from routes import cameras_api
+from routes import joystick_api
 
 server = FastAPI()
 
@@ -22,6 +23,7 @@ server.add_middleware(
 # register routes
 server.include_router(sensors_api.router)
 server.include_router(cameras_api.router)
+server.include_router(joystick_api.router)
 
 
 @server.get('/')
@@ -41,6 +43,9 @@ if __name__ == '__main__':
 
     # start system interface web server
     uvicorn.run(server, host='127.0.0.1', port=8080)
+
+    # shutdown ros service
+    ros_service.serivce_shutdown()
 
     # stop ros service loop
     # ros_service.service_active = False

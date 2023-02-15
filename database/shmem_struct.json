@@ -1,5 +1,15 @@
 {
-    "sensors_cluster_readings": {},
+    "sensors_cluster_readings": {
+        "acc_x": 0,
+        "acc_y": 0,
+        "acc_z": 0,
+        "coil": 0
+    },
+    "joystick_controls": {
+        "left_analog": "0,0",
+        "right_analog": "0,0",
+        "cmd": "X"
+    },
     "cameras_cluster_feed": {
         "CAM_1": "none"
     }

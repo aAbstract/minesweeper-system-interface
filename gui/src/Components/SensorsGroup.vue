@@ -13,11 +13,11 @@ defineProps<{
 function compute_color_class(value: string) {
     const num_value = Number(value);
 
-    if (num_value < 30)
+    if (num_value <= 30)
         return 'green_span';
-    else if (num_value < 60)
+    else if (num_value <= 60)
         return 'yellow_span';
-    else if (num_value < 100)
+    else if (num_value <= 100)
         return 'red_span';
     else
         return '';
